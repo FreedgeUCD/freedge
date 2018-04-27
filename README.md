@@ -1,6 +1,6 @@
 <div align="center">
   <a href="http://freedge.org"> 
-    <img src="docs/logo.gif">
+    <img src="docs/logo.png">
   </a>
 </div>
 ---
