@@ -2,13 +2,14 @@
 """
 
 class Sensor(object):
-    def __init__(port):
-        self.port = port
+    def __init__(self, id, cloud_provider=None):
+        self.id = id
+        self.cloud_provider = cloud_provider
 
-    def connect():
+    def connect(self):  
         raise NotImplementedError
 
-    def disconnect():
+    def disconnect(self):
         raise NotImplementedError
 
         
