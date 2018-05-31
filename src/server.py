@@ -34,24 +34,23 @@ def parse_args():
   args = argparse.ArgumentParser()
   args.add_argument('--demo_mode',  default=False, type=bool)
   args.add_argument('--project_id', default='freedge-demo', type=str)
+  args.add_argument('--location',   default='us-central1', type=str)
   args.add_argument('--registry_id',default='freedge.org', type=str)
   args.add_argument('--device_id',  default='freedgePrototype', type=str)
+  args.add_argument('--private_key', default=None, type=str)
   return args.parse_args()
   
 def main(args):
-  reg_id = args.registry_id
-  dev_id = args.device_id
-
-  # awscloud   = AWS(cloud_api=args.project_id)
+  # TODO: add cloud intergration
   door = MagneticSwitch(
       pin=GPIO_DOOR_PIN, 
-      id='door_{}_{}'.format(reg_id, dev_id))
+      id='door_{}_{}'.format(args.registry_id, args.device_id))
   weather = WeatherAM2315(
       address=I2C_ADDRESS, 
-      id='weather_{}_{}'.format(reg_id, dev_id))
+      id='weather_{}_{}'.format(args.registry_id, args.device_id))
   cam_manager = CameraMananger(
       devices=CAMERAS, 
-      id='cammanager_{}_{}'.format(reg_id, dev_id))
+      id='cammanager_{}_{}'.format(args.registry_id, args.device_id))
 
   while True:       
     if door.is_open() and not cam_manager.is_activated(): 
@@ -61,12 +60,11 @@ def main(args):
     elif not door.is_open() and cam_manager.is_activated():
       print("Door is closed!\nWaiting 1 second...")
       cam_manager.trigger()
-      time.sleep(1)
+
     else:
       print("Door is closed...")
       weather.check()
       cam_manager.trigger()
-
       time.sleep(1)
 
     time.sleep(0.1)
