@@ -32,18 +32,17 @@ class WeatherAM2315(Sensor):
         super(WeatherAM2315, self).__init__(**kwargs)
         self.temperature = 0
         self.humidity = -1
-        self.good_singal = False
         self.am2315 = AM2315(address, i2c_port)
 
     def sense(self):
-        self.temperature, self.humidity, self.good_singal = self.am2315.sense()
+        temp, humid, ok = self.am2315.sense()
         if ok == 1:
-            print("Temperature: {:.2f}*C".format(temperature))
-            print("Humidity: {:.2f}%".format(humidity))
+            self.temperature = temp
+            self.humidity = humid
+            print("Temperature: {:.2f}*C".format(self.temperature))
+            print("Humidity: {:.2f}%".format(self.humidity))
         return self
         
     def upload(self):
-        if self.cloud_provider:
-            data = self.temperature
-            self.cloud_provider.upload(data)
+        raise NotImplementedError
 

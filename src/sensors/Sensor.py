@@ -28,6 +28,4 @@ class Sensor(object):
         self.cloud_provider = cloud_provider
         
     def upload(self, data):  
-        if self.cloud_provider.is_connected():
-            
         raise NotImplementedError

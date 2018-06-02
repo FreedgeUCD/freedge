@@ -23,6 +23,7 @@
 """Freedge, a communinty fridge, has multiple sensors to help users easily 
 know what food is curently available.
 
+-------------
 Hardware Info
 -------------
 In this protoype, Freedge would have the following sensors:
@@ -34,13 +35,15 @@ In this protoype, Freedge would have the following sensors:
 In addition, we use a Raspberry Pi 3B to act as mailman that sends all the 
 sensor data to the Google Cloud IoT Core.
 
-How it works
-------------
+-----------------
+How Freedge works
+-----------------
   * For every 30 seconds, we collect the current temperature / humidty of the
-  fridge as well as the images inside the fridge (for quality control analysis
-  later).
- * Whenever someone open/close the door, we also collect sensor data.
- * All collected data will be (hopefully safely) stored in Google Cloud.
+  freedge.
+  * For every 5 minutes,  we collect images inside the freedge 
+  (for quality control analysis later).
+  * Whenever someone open/close the door, we also collect sensor data.
+  * All collected data will be (hopefully safely) stored in Google Cloud.
   
 Future Directions:
 ------------------
@@ -62,15 +65,7 @@ def main(args):
   # ##########################
   # Initialize IoT Cloud
   # ##########################
-  iot_cloud = GoogleIoTCore(
-      project_id=args.project_id,
-      location=args.location,
-      registry_id=registry_id,
-      device_id=args.device_id,
-      private_key=agrs.private_key,
-      ca_certs=args.ca_certs,
-      encryption_algorithm=args.encryption_algorithm)
-  iot_cloud.connect()
+
 
   # ##########################
   # Initialize Sensors 
@@ -115,7 +110,8 @@ def main(args):
       time.sleep(0.1)
 
   # When someone is pressed Ctrl + C
-  except KeyboardInterrupt:
+  except Exception as e:
+    print(e)
     print('Cleaning up')
     door.cleanup()
     iot_cloud.disconnect()
@@ -124,14 +120,7 @@ def main(args):
 
 def parse_args():
   args = argparse.ArgumentParser()
-  args.add_argument('--demo_mode',  type=bool, default=False)
-  args.add_argument('--project_id', type=str, default='freedge-demo')
-  args.add_argument('--location',   type=str, default='us-central1')
-  args.add_argument('--registry_id',type=str, default='freedge.org')
-  args.add_argument('--device_id',  type=str, default='freedgePrototype')
-  args.add_argument('--private_key',type=str, default=None)
-  args.add_argument('--ca_certs',type=str, default=None)
-  args.add_argument('--encryption_algorithm' choices=('RS256', 'ES256'), default='ES256')
+  args.add_argument('--credential_file',  type=str, help='path to credential json key for inserting data')
 
   return args.parse_args()
   
