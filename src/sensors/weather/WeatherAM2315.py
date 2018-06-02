@@ -28,13 +28,22 @@ class WeatherAM2315(Sensor):
     """"AM2315 sensor measures temperature and humidity 
     in the environment.
     """
-    def __init__(self, address, **kwargs):
+    def __init__(self, address, i2c_port="/dev/i2c-1", **kwargs):
         super(WeatherAM2315, self).__init__(**kwargs)
-        self.am2315 = AM2315(address, "/dev/i2c-1")
+        self.temperature = 0
+        self.humidity = -1
+        self.good_singal = False
+        self.am2315 = AM2315(address, i2c_port)
 
-    def check(self):
-        temperature, humidity, ok = self.am2315.sense()
-        # if ok == 1:
-        print("Temperature: {:.2f}*C".format(temperature))
-        print("Humidity: {:.2f}%".format(humidity))
+    def sense(self):
+        self.temperature, self.humidity, self.good_singal = self.am2315.sense()
+        if ok == 1:
+            print("Temperature: {:.2f}*C".format(temperature))
+            print("Humidity: {:.2f}%".format(humidity))
+        return self
         
+    def upload(self):
+        if self.cloud_provider:
+            data = self.temperature
+            self.cloud_provider.upload(data)
+
