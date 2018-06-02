@@ -19,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+# =============================================================================
 
 import json
 import base64
@@ -31,13 +32,16 @@ class CloudAPI(object):
   It enables us to (potentially) use Google Cloud, MS Azure, or AWS service
   in a unifed way.
   """
-  def __init__():
+  def __init__(self):
     self.connected = False
 
-  def is_connected():
+  def is_connected(self):
     return self.connected
 
-  def upload(self, endpoint_url, jwt, b64_buf):
+  def mqtt_upload(self, endpoint_url, jwt, data):
+    raise NotImplementedError
+
+  def http_upload(self, endpoint_url, jwt, b64_buf):
     headers = {
       "Authorization": "Bearer {}".format(jwt),
       "Content-Type" : "application/json",
@@ -56,7 +60,12 @@ class CloudAPI(object):
             f.write(base64.urlsafe_b64decode(b64_buf))
         print("Saved failed image to {}".format(filename))
 
-
+class InfluxDB(CloudAPI):
+  def __init__(self, host, port, **kwargs):
+    self.host = host
+    self.port = port
+    super(InfluxDB, self).__init__(**kwargs)
+    
  
 class Google(CloudAPI):
   # google_cloud_url = "https://cloudiotdevice.googleapis.com/v1/projects/{}/locations/{}/registries/{}/devices/{}:publishEvent".format(
