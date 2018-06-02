@@ -1,7 +1,7 @@
 import jwt
 import datetime
 
-def create_jwt(self, project_id, private_key_file, algorithm='ES256', expire_in=60):
+def create_jwt(project_id, private_key_file, algorithm='ES256', expire_in=60):
     """Creates a Json Web Token (JWB) (https://jwt.io) to establish
     a secured connection between two parties.
     
