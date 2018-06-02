@@ -19,21 +19,36 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+# =============================================================================
+"""Camera Manager allows program to control activate multiple cameras
+at the same time.
+"""
+from .Camera import Camera
 
-from ..Sensor import Sensor
-from tentacle_pi.AM2315 import AM2315
+class CameraMananger(object):
+    def __init__(self, devices, id, cloud_provider=None):
+        self.id = id
+        self.activated = False
+        self.manager = self._setup(devices, cloud_provider)
 
-class WeatherAM2315(Sensor):
-    """"AM2315 sensor measures temperature and humidity 
-    in the environment.
-    """
-    def __init__(self, address, **kwargs):
-        super(WeatherAM2315, self).__init__(**kwargs)
-        self.am2315 = AM2315(address, "/dev/i2c-1")
+    def activate(self):
+        self.activated = True
 
-    def check(self):
-        temperature, humidity, ok = self.am2315.sense()
-        if ok == 1:
-            print("Temperature: {:.2f}*C".format(temperature))
-            print("Humidity: {:.2f}%".format(humidity))
-            
+    def is_activated(self):
+        return self.activated
+
+    def trigger(self):
+        self.activated = False
+        for cam in self.manager:
+            cam.takes_photo()
+
+    def _setup(self, devices,cloud_provider):
+        manager = []
+        _, registry_id, device_id = self.id.split('_')
+        for idx, device in enumerate(devices):
+            camera = Camera(
+                device=device, 
+                id='cam{}_{}_{}'.format(idx, registry_id, device_id), 
+                cloud_provider=cloud_provider)
+            manager.append(camera)
+        return manager

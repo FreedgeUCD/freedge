@@ -21,41 +21,20 @@
 # SOFTWARE.
 # =============================================================================
 
-import time
-import RPi.GPIO as GPIO
 from ..Sensor import Sensor
+from tentacle_pi.AM2315 import AM2315
 
-     
-# Rasp Pi 3B GPIO Pinout:
-# Ref: http://pi4j.com/pins/model-3b-rev1.html
-GPIO.setmode(GPIO.BCM)
+class WeatherAM2315(Sensor):
+    """"AM2315 sensor measures temperature and humidity 
+    in the environment.
+    """
+    def __init__(self, address, **kwargs):
+        super(WeatherAM2315, self).__init__(**kwargs)
+        self.am2315 = AM2315(address, "/dev/i2c-1")
 
-class MagneticSwitch(Sensor):
-    def __init__(self, pin, **kwargs):
-        self.pin = pin
-        self.in_open_state = False
-        self.last_open = time.time()
-
-        super(MagneticSwitch, self).__init__(**kwargs)
-        # Set up the door sensor pin.
-        GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) 
-
-    def is_open(self):
-        # 0 : Close // 1 : Open
-        is_openning = bool(GPIO.input(self.pin))
-        if is_openning and not self.in_open_state:
-            self.in_open_state = True
-        elif not is_openning and self.in_open_state:
-            self.in_open_state = False
-            self.last_open = time.time()
-
-        return is_openning
-
-    def is_recently_closed(self, duration_in_second=0.5):
-        if time.time() - self.last_open < duration_in_second:
-            return True
-        else:
-            return False
-
-    def cleanup(self):
-        GPIO.cleanup()
+    def check(self):
+        temperature, humidity, ok = self.am2315.sense()
+        # if ok == 1:
+        print("Temperature: {:.2f}*C".format(temperature))
+        print("Humidity: {:.2f}%".format(humidity))
+        
