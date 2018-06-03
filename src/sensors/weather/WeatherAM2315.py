@@ -25,38 +25,27 @@ from ..Sensor import Sensor
 from tentacle_pi.AM2315 import AM2315
 
 class WeatherAM2315(Sensor):
-    """"AM2315 sensor measures temperature and humidity 
-    in the environment.
-    """
-    def __init__(self, address, i2c_port="/dev/i2c-1", **kwargs):
-        super(WeatherAM2315, self).__init__(**kwargs)
-        self.temperature = 0
-        self.humidity = -1
-        self.am2315 = AM2315(address, i2c_port)
+  """"AM2315 sensor measures temperature and humidity 
+  in the environment.
+  """
+  def __init__(self, address, i2c_port="/dev/i2c-1", **kwargs):
+    super(WeatherAM2315, self).__init__(**kwargs)
+    self.am2315 = AM2315(address, i2c_port)
 
-    def sense(self, max_attempts=3):
-        num_attempts = 0
-        while True:
-            temp, humid, ok = self.am2315.sense()
-            if ok == 1:
-                self.temperature = temp
-                self.humidity = humid
-                print("Temperature: {:.2f}*C".format(self.temperature))
-                print("Humidity: {:.2f}%".format(self.humidity))
-                break
-            else:
-                num_attempts += 1
-                print("Trying to obtain weather data again ({}/{})".format(
-                      num_attempts,max_attempts))
-                time.sleep(0.5)
-                if num_attempts >= max_attempts:
-                    print("Please check weather sensor connection.")
-                    break
-        return self
-        
-    def upload(self):
-        if self.cloud_provider is not None:
-            self.cloud_provider.publish(
-                topic='state', 
-                data={'temp': self.temperature, 'humid': self.humidity})
-
+  def sense(self, max_attempts=3):
+    num_attempts = 0
+    while True:
+      temp, humid, ok = self.am2315.sense()
+      if ok == 1:
+        print("Temperature: {:.2f}*C".format(self.temperature))
+        print("Humidity: {:.2f}%".format(self.humidity))
+        break
+      else:
+        num_attempts += 1
+        print("Sensor is temporarily unavailable. Reconnecting ({}/{})".format(
+              num_attempts,max_attempts))
+        time.sleep(0.5)
+        if num_attempts >= max_attempts:
+          print("Please check weather sensor connection.")
+          break
+    return temp, humid, ok

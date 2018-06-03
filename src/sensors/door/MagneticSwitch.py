@@ -35,7 +35,7 @@ class MagneticSwitch(Sensor):
         self.pin = pin
         self.in_open_state = False
         self.last_open = time.time()
-
+        self.last_close = time.time()
         super(MagneticSwitch, self).__init__(**kwargs)
         # Set up the door sensor pin.
         GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) 
@@ -45,21 +45,21 @@ class MagneticSwitch(Sensor):
         is_openning = bool(GPIO.input(self.pin))
         if is_openning and not self.in_open_state:
             self.in_open_state = True
-        elif not is_openning and self.in_open_state:
-            self.in_open_state = False
             self.last_open = time.time()
 
+        elif not is_openning and self.in_open_state:
+            self.in_open_state = False
+            self.last_close = time.time()
         return is_openning
 
     def is_recently_closed(self, duration_in_second=0.5):
-        if time.time() - self.last_open < duration_in_second:
+        if time.time() - self.last_close < duration_in_second:
             return True
         else:
             return False
 
-    def upload(self):
-        if self.cloud_provider is not None:
-            self.cloud_provider.publish(topic='state', data=1)
+    def get_active_period():
+        return self.last_close - self.last_open
 
     def cleanup(self):
         GPIO.cleanup()
