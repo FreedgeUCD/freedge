@@ -40,8 +40,8 @@ from sensors import MagneticSwitch, WeatherAM2315
 # Also, the ground (Black) wire is connected to PIN 4.
 GPIO_DOOR_PIN = 18
 
-# Weather sensor use I2C protocol, we follow this tutorial to determine 
-# the AM2315 address mapping on Linux: 
+# Weather sensor (AM2315) uses I2C protocol, we follow this tutorial to determine 
+# the  address mapping on Linux: 
 # [1] https://shop.switchdoc.com/products/am2315-encased-i2c-temperature-humidity-sensor-for-raspberry-pi-arduino
 I2C_AM2315_ADDRESS = 0x5c
 
@@ -128,7 +128,7 @@ class Freedge(object):
           'humidity': humidity
         }
       return data
-      
+
   def retreive_sensor_data(self):
     # Obtain temperature, humidty data
     temperature, humidity, ok = self.environment.sense()
