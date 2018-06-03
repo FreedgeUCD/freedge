@@ -14,11 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Python sample for connecting to Google Cloud IoT Core via MQTT, using JWT.
-This example connects to Google Cloud IoT Core via MQTT, using a JWT for device
-authentication. After connecting, by default the device publishes 100 messages
-to the device's MQTT topic at a rate of one per second, and then exits.
-Before you run the sample, you must follow the instructions in the README
-for this sample.
+
+Notes: This one provides scable solution, however, it seems to be too 
+complicated for this project.
 """
 
 # [START iot_mqtt_includes]

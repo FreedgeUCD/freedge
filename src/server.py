@@ -31,7 +31,7 @@ How Freedge works
   (for quality control analysis later).
 
   * Whenever someone open/close the door, we also collect data from all
-  sensors, including images, temp/hudmidty, and active period. 
+  sensors, including images, temp/hudmidty, and active period.
   
   * In addition, the update interval will be reset starting from last active 
   period.
@@ -42,22 +42,14 @@ import sys
 import time
 import argparse
 
-# from clouds import CloudDB, CloudML
 from Freedge import Freedge
-
-def parse_args():
-  args = argparse.ArgumentParser()
-  args.add_argument('--device_id', type=str, default='freedgePrototype')
-  args.add_argument('--camera_update_interval', type=int, default=600)
-  args.add_argument('--weather_update_interval', type=int, default=120)
-  return args.parse_args()
+# from clouds import CloudDB, CloudML
 
 def main(args):
   # ############################
   # Initialize cloud and Freedge
   # ############################
-  # INFLUXDB_HOST = 'http://172.30.67.178'
-  # INFLUXDB_NAME = 'temperature_db'
+  # cloud = cloudDB('http://172.30.67.178', 'temperature_db')
   freedge = Freedge(
       device_id=args.device_id,
       camera_update_interval=args.camera_update_interval,
@@ -67,22 +59,26 @@ def main(args):
   # ##########################
   # Main Loop
   # ##########################
-  while True:
-    updates = freedge.run()
-    if updates:
-      print(updates)
+  try: 
+    while True:
+      updates = freedge.run()
+      if updates:
+        print('Uploading new updates to cloud: {}'.format(updates))
+        # cloud.upload(updates)
+      time.sleep(0.1)
       
-    time.sleep(0.1)
+  except KeyboardInterrupt as exit_signal:
+    print('Ctrl + C is pressed')
+    #TODO: add cleanup
 
 
+def parse_args():
+  args = argparse.ArgumentParser()
+  args.add_argument('--device_id', type=str, default='freedgePrototype')
+  args.add_argument('--camera_update_interval', type=int, default=600)
+  args.add_argument('--weather_update_interval', type=int, default=120)
+  return args.parse_args()
 
 if __name__ == '__main__':
   args = parse_args()
   main(args)
-
-  # try: 
-  # except KeyboardInterrupt as exit_signal:
-  #   print('Ctrl + C is pressed. Cleaning up..')
-  #   # door.cleanup()
-  # except Exception as e: 
-  #   print(e)  # all other expcetions display here
