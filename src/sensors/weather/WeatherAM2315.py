@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
-
+import time
 from ..Sensor import Sensor
 from tentacle_pi.AM2315 import AM2315
 
@@ -34,13 +34,24 @@ class WeatherAM2315(Sensor):
         self.humidity = -1
         self.am2315 = AM2315(address, i2c_port)
 
-    def sense(self):
-        temp, humid, ok = self.am2315.sense()
-        if ok == 1:
-            self.temperature = temp
-            self.humidity = humid
-            print("Temperature: {:.2f}*C".format(self.temperature))
-            print("Humidity: {:.2f}%".format(self.humidity))
+    def sense(self, max_attempts=3):
+        num_attempts = 0
+        while True:
+            temp, humid, ok = self.am2315.sense()
+            if ok == 1:
+                self.temperature = temp
+                self.humidity = humid
+                print("Temperature: {:.2f}*C".format(self.temperature))
+                print("Humidity: {:.2f}%".format(self.humidity))
+                break
+            else:
+                num_attempts += 1
+                print("Trying to obtain weather data again ({}/{})".format(
+                      num_attempts,max_attempts))
+                time.sleep(0.5)
+                if num_attempts >= max_attempts:
+                    print("Please check weather sensor connection.")
+                    break
         return self
         
     def upload(self):

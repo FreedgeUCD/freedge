@@ -52,75 +52,78 @@ Future Directions:
 import sys
 import time
 import argparse
+from sensors import MagneticSwitch, WeatherAM2315
 
-from cloud.api import GoogleIoTCore
-from sensors import CameraMananger, MagneticSwitch, WeatherAM2315
+# #######################
+# Hardware Configuration
+# #######################
+# Define how sensors is connected to Freedge. On Raspberry Pi 3, we have over
+# 40 GPIO PINs, 4 USB ports. The below config. shows how each component is 
+# connected (or wired) to the Rasp Pi 3.
 
-I2C_ADDRESS = 0x5c
+# Reference:
+# ---------
+# Rasp Pi 3B GPIO Pinout:
+# Ref: http://pi4j.com/pins/model-3b-rev1.html
+
+
+# Door Sensor Signal is received from PIN 18 (In BCM Mode). 
+# Also, the ground (Black) wire is connected to PIN 4.
 GPIO_DOOR_PIN = 18
-CAMERAS = [0, 1]
+
+# Weather sensor use I2C protocol, we follow this tutorial to determine the AM2315 address
+# mapping on Linux: 
+# [1] https://shop.switchdoc.com/products/am2315-encased-i2c-temperature-humidity-sensor-for-raspberry-pi-arduino
+I2C_AM2315_ADDRESS = 0x5c
 
 def main(args):
+  # ##########################
+  # Initialize Freedge Cloud
+  # ##########################
+  #Setup some constants with InfluxDB Host and Database name
+  INFLUXDB_HOST = 'http://172.30.67.178'
+  INFLUXDB_NAME = 'temperature_db'
 
   # ##########################
-  # Initialize IoT Cloud
+  # Initialize Freedge Sensors 
   # ##########################
+  door    = MagneticSwitch(pin=GPIO_DOOR_PIN, id='doorswitch')
+  weather = WeatherAM2315(address=I2C_AM2315_ADDRESS, i2c_port="/dev/i2c-1", id='weather')
 
-
-  # ##########################
-  # Initialize Sensors 
-  # ##########################
-  door = MagneticSwitch(
-      pin=GPIO_DOOR_PIN, 
-      cloud_provider=iot_cloud,
-      id='door_{}_{}'.format(args.registry_id, args.device_id))
-
-  weather_sensor = WeatherAM2315(
-      address=I2C_ADDRESS, 
-      cloud_provider=iot_cloud,
-      id='weather_{}_{}'.format(args.registry_id, args.device_id))
-
-  # cam_manager = CameraMananger(
-  #     devices=CAMERAS, 
-  #     id='cammanager_{}_{}'.format(args.registry_id, args.device_id),
-  #     cloud_provider=iot_cloud)
 
   # #########################
-  #        Main Loop 
+  # Main Loop 
   # #########################
-  # Whenever some one opens the door, 
-  # is_triggered is set to True until 
-  # the door is closed.
+  # Whenever some one opens the door, is_triggered is set to True 
+  # until the door is closed.
   is_triggered = False
   try: 
     while True:       
       if door.is_open() and not is_triggered: 
         print("Door is opening.")
         is_triggered = True
-      elif door.is_recently_closed():
+      elif door.is_recently_closed() and is_triggered:
         print("Door is closed.")
         time.sleep(1)
         print("\n------------------------")
         print("Retrieving sensor data..")
         print("------------------------\n")
-        weather_sensor.sense()
-        # cam_manager.trigger()
+        weather.sense()
         print("------------------------\n")
         is_triggered = False
       time.sleep(0.1)
-
-  # When someone is pressed Ctrl + C
-  except Exception as e:
-    print(e)
-    print('Cleaning up')
+  except KeyboardInterrupt as exit_signal:
+    print('Ctrl + C is pressed. Cleaning up..')
     door.cleanup()
-    iot_cloud.disconnect()
-  finally:
-    sys.exit(0)
+  except Exception as e: 
+    print(e)  # all other expcetions display here
+
 
 def parse_args():
   args = argparse.ArgumentParser()
-  args.add_argument('--credential_file',  type=str, help='path to credential json key for inserting data')
+  args.add_argument(
+    '--credential_file', type=str, 
+    help='path to credential json key for inserting data')
 
   return args.parse_args()
   

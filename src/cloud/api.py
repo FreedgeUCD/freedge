@@ -21,8 +21,6 @@
 # SOFTWARE.
 # =============================================================================
 import time
-import json
-import base64
 import requests
 import datetime
 
