@@ -20,110 +20,60 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
-"""Freedge, a communinty fridge, has multiple sensors to enable users effortlessly 
-and immediately know what food is curently available through a web app.
-
--------------
-Hardware Info
--------------
-In this protoype, Freedge would have the following sensors:
-   * A Door sensor (Magnetic Switch): to know when someone is using Freedge.
-   * A Weather sensor (AM2315): to know the current temperature/humidity.
-   * 3 Cameras (ELP 170* Wide angle USB cam): to know what is currently inside
-        Freedge.
-
-In addition, we use a Raspberry Pi 3B to act as mailman that sends all the 
-sensor data to the Google Cloud IoT Core.
-
+"""
 -----------------
 How Freedge works
 -----------------
-  * For every 30 seconds, we collect the current temperature / humidty of the
+  * For every 120 seconds, we collect the current temperature / humidty of the
   freedge.
-  * For every 5 minutes,  we collect images inside the freedge 
+
+  * For every 600 seconds (10 mins),  we collect images inside the freedge 
   (for quality control analysis later).
-  * Whenever someone open/close the door, we also collect sensor data.
-  * All collected data will be (hopefully safely) stored in Google Cloud.
+
+  * Whenever someone open/close the door, we also collect data from all
+  sensors, including images, temp/hudmidty, and active period. 
+  
+  * In addition, the update interval will be reset starting from last active 
+  period.
+
+  * All collected data will send to a Cloud Database.
 """
 import sys
 import time
 import argparse
 
-from sensors import MagneticSwitch, WeatherAM2315
-
-
-
-# #######################
-# Hardware Configuration
-# #######################
-# Define how sensors are connected to Freedge. Raspberry Pi 3 has over
-# 40 GPIO PINs, 4 USB ports. The below config. shows how each component 
-# is connected (or wired) to the Rasp Pi 3.
-
-# Reference:
-# ---------
-# Rasp Pi 3B GPIO Pinout:
-# Ref: http://pi4j.com/pins/model-3b-rev1.html
-
-
-# Door Sensor Signal is received from PIN 18 (In BCM Mode). 
-# Also, the ground (Black) wire is connected to PIN 4.
-GPIO_DOOR_PIN = 18
-
-# Weather sensor use I2C protocol, we follow this tutorial to determine 
-# the AM2315 address mapping on Linux: 
-# [1] https://shop.switchdoc.com/products/am2315-encased-i2c-temperature-humidity-sensor-for-raspberry-pi-arduino
-I2C_AM2315_ADDRESS = 0x5c
-
-def main(args):
-  # ##########################
-  # Initialize Freedge Cloud
-  # ##########################
-  INFLUXDB_HOST = 'http://172.30.67.178'
-  INFLUXDB_NAME = 'temperature_db'
-
-  # ##########################
-  # Initialize Freedge Sensors 
-  # ##########################
-  door = MagneticSwitch(
-      pin=GPIO_DOOR_PIN, 
-      id='door_{}'.format(args.device_id))
-
-  environment = WeatherAM2315(
-      address=I2C_AM2315_ADDRESS, 
-      id='environment_{}'.format(args.device_id))
-
-  print('Initualization Completed. Starting Main loop...')
-  # #########################
-  # Main Loop 
-  # #########################
-  # Whenever some one opens the door, is_triggered is set to True 
-  # until the door is closed.
-  is_triggered = False
-  update_interval = 60
-  # Start connecting to Google Cloud Server
-  while True:       
-      if door.is_open() and not is_triggered: 
-        print("Door is opening.")
-        is_triggered = True
-        
-      elif door.is_recently_closed() and is_triggered:
-        print("Door is closed.")
-        time.sleep(1)
-        print("\n------------------------")
-        print("Retrieving sensor data..")
-        print("------------------------\n")
-        environment.sense()
-        environment.upload()
-        print("------------------------\n")
-        is_triggered = False
-      time.sleep(0.1)
-
+# from clouds import CloudDB, CloudML
+from Freedge import Freedge
 
 def parse_args():
   args = argparse.ArgumentParser()
-  args.add_argument('--device_id',  type=str, default='freedgePrototype')
+  args.add_argument('--device_id', type=str, default='freedgePrototype')
+  args.add_argument('--camera_update_interval', type=int, default=600)
+  args.add_argument('--weather_update_interval', type=int, default=120)
   return args.parse_args()
+
+def main(args):
+  # ############################
+  # Initialize cloud and Freedge
+  # ############################
+  # INFLUXDB_HOST = 'http://172.30.67.178'
+  # INFLUXDB_NAME = 'temperature_db'
+  freedge = Freedge(
+      device_id=args.device_id,
+      camera_update_interval=args.camera_update_interval,
+      weather_update_interval=args.weather_update_interval,
+      verbose=True)
+
+  # ##########################
+  # Main Loop
+  # ##########################
+  while True:
+    updates = freedge.run()
+    if updates:
+      print(updates)
+      
+    time.sleep(0.1)
+
 
 
 if __name__ == '__main__':
@@ -136,6 +86,3 @@ if __name__ == '__main__':
   #   # door.cleanup()
   # except Exception as e: 
   #   print(e)  # all other expcetions display here
-
-  # Setup some constants with InfluxDB 
-  # Host and Database name.
