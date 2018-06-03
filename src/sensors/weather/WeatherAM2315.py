@@ -55,5 +55,8 @@ class WeatherAM2315(Sensor):
         return self
         
     def upload(self):
-        raise NotImplementedError
+        if self.cloud_provider is not None:
+            self.cloud_provider.publish(
+                topic='state', 
+                data={'temp': self.temperature, 'humid': self.humidity})
 

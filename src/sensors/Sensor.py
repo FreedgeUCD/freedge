@@ -27,5 +27,5 @@ class Sensor(object):
         self.id = id
         self.cloud_provider = cloud_provider
         
-    def upload(self, data):  
+    def upload(self):  
         raise NotImplementedError

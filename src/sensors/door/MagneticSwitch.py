@@ -20,8 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
-
 import time
+import datetime
 import RPi.GPIO as GPIO
 from ..Sensor import Sensor
 
@@ -56,6 +56,10 @@ class MagneticSwitch(Sensor):
             return True
         else:
             return False
+
+    def upload(self):
+        if self.cloud_provider is not None:
+            self.cloud_provider.publish(topic='state', data=1)
 
     def cleanup(self):
         GPIO.cleanup()

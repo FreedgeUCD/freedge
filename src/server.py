@@ -20,8 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
-"""Freedge, a communinty fridge, has multiple sensors to help users easily 
-know what food is curently available.
+"""Freedge, a communinty fridge, has multiple sensors to enable users effortlessly 
+and immediately know what food is curently available through a web app.
 
 -------------
 Hardware Info
@@ -44,22 +44,21 @@ How Freedge works
   (for quality control analysis later).
   * Whenever someone open/close the door, we also collect sensor data.
   * All collected data will be (hopefully safely) stored in Google Cloud.
-  
-Future Directions:
-------------------
-  1. How can we improve Freedge to improve customer retention rate?
 """
 import sys
 import time
 import argparse
+
 from sensors import MagneticSwitch, WeatherAM2315
+
+
 
 # #######################
 # Hardware Configuration
 # #######################
-# Define how sensors is connected to Freedge. On Raspberry Pi 3, we have over
-# 40 GPIO PINs, 4 USB ports. The below config. shows how each component is 
-# connected (or wired) to the Rasp Pi 3.
+# Define how sensors are connected to Freedge. Raspberry Pi 3 has over
+# 40 GPIO PINs, 4 USB ports. The below config. shows how each component 
+# is connected (or wired) to the Rasp Pi 3.
 
 # Reference:
 # ---------
@@ -71,8 +70,8 @@ from sensors import MagneticSwitch, WeatherAM2315
 # Also, the ground (Black) wire is connected to PIN 4.
 GPIO_DOOR_PIN = 18
 
-# Weather sensor use I2C protocol, we follow this tutorial to determine the AM2315 address
-# mapping on Linux: 
+# Weather sensor use I2C protocol, we follow this tutorial to determine 
+# the AM2315 address mapping on Linux: 
 # [1] https://shop.switchdoc.com/products/am2315-encased-i2c-temperature-humidity-sensor-for-raspberry-pi-arduino
 I2C_AM2315_ADDRESS = 0x5c
 
@@ -80,54 +79,63 @@ def main(args):
   # ##########################
   # Initialize Freedge Cloud
   # ##########################
-  #Setup some constants with InfluxDB Host and Database name
   INFLUXDB_HOST = 'http://172.30.67.178'
   INFLUXDB_NAME = 'temperature_db'
 
   # ##########################
   # Initialize Freedge Sensors 
   # ##########################
-  door    = MagneticSwitch(pin=GPIO_DOOR_PIN, id='doorswitch')
-  weather = WeatherAM2315(address=I2C_AM2315_ADDRESS, i2c_port="/dev/i2c-1", id='weather')
+  door = MagneticSwitch(
+      pin=GPIO_DOOR_PIN, 
+      id='door_{}'.format(args.device_id))
 
+  environment = WeatherAM2315(
+      address=I2C_AM2315_ADDRESS, 
+      id='environment_{}'.format(args.device_id))
 
+  print('Initualization Completed. Starting Main loop...')
   # #########################
   # Main Loop 
   # #########################
   # Whenever some one opens the door, is_triggered is set to True 
   # until the door is closed.
   is_triggered = False
-  try: 
-    while True:       
+  update_interval = 60
+  # Start connecting to Google Cloud Server
+  while True:       
       if door.is_open() and not is_triggered: 
         print("Door is opening.")
         is_triggered = True
+        
       elif door.is_recently_closed() and is_triggered:
         print("Door is closed.")
         time.sleep(1)
         print("\n------------------------")
         print("Retrieving sensor data..")
         print("------------------------\n")
-        weather.sense()
+        environment.sense()
+        environment.upload()
         print("------------------------\n")
         is_triggered = False
       time.sleep(0.1)
-  except KeyboardInterrupt as exit_signal:
-    print('Ctrl + C is pressed. Cleaning up..')
-    door.cleanup()
-  except Exception as e: 
-    print(e)  # all other expcetions display here
 
 
 def parse_args():
   args = argparse.ArgumentParser()
-  args.add_argument(
-    '--credential_file', type=str, 
-    help='path to credential json key for inserting data')
-
+  args.add_argument('--device_id',  type=str, default='freedgePrototype')
   return args.parse_args()
-  
+
 
 if __name__ == '__main__':
   args = parse_args()
   main(args)
+
+  # try: 
+  # except KeyboardInterrupt as exit_signal:
+  #   print('Ctrl + C is pressed. Cleaning up..')
+  #   # door.cleanup()
+  # except Exception as e: 
+  #   print(e)  # all other expcetions display here
+
+  # Setup some constants with InfluxDB 
+  # Host and Database name.

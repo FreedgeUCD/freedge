@@ -21,10 +21,9 @@
 # SOFTWARE.
 # =============================================================================
 import time
+import json
 import requests
 import datetime
-
-from .utils import create_jwt
 
 class CloudAPI(object):
   """Abstract Class for Cloud API integration.
@@ -37,3 +36,17 @@ class CloudAPI(object):
 
   def is_connected(self):
     return self.connected
+
+  def publish(self, topic, data):
+    raise NotImplementedError
+
+class InfluxDB(CloudAPI):
+
+  def __init__(host, port, user, passwd, database):
+    self.host = host
+    self.port = port
+    self.user = user
+    self.passwd = passwd
+    self.database = database
+  
+  
