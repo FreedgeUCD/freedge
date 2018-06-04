@@ -61,7 +61,8 @@ def main(args):
   cloud = CloudDB(
       host='172.30.67.178', 
       port=8086, 
-      database='freedgeDB')
+      database='freedgeDB', 
+      verbose=True)
 
   freedge = Freedge(
       device_id=args.device_id,

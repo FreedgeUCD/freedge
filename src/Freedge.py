@@ -35,9 +35,9 @@ from sensors import MagneticSwitch, WeatherAM2315, LightStrip
 # Rasp Pi 3B GPIO Pinout:
 # Ref: http://pi4j.com/pins/model-3b-rev1.html
 
-# Door Sensor Signal is received from PIN 18 (In BCM Mode). 
-# Also, the ground (Black) wire is connected to PIN 4.
-GPIO_DOOR_PIN = 18
+# PIN to receive Door (RED) Signal.
+# Also, the ground (BLACK) wire is connected to PIN 4.
+GPIO_DOOR_PIN = 12  # in BCM Mode
 
 # Weather sensor (AM2315) uses I2C protocol, we follow this tutorial to determine 
 # the  address mapping on Linux: 
@@ -106,22 +106,34 @@ class Freedge(object):
     """This function get called in a while-loop 
     to determine the current status of Freedge.
     """
-    self.lighting.theaterChase()
 
+    # self.lighting.theaterChase()
     if self.door.is_open() and not self.is_triggered: 
       if self.verbose:
         print("Door is opening.")
       self.is_triggered = True
+      # self.lighting.theaterChase()
       return None
 
     elif self.is_triggered and self.door.is_recently_closed():
       if self.verbose:
         print("Door is closed.\n")
-      time.sleep(1)
+
+      # Obtaining Data
+      self.lighting.flash()
+      time.sleep(2.0)
+
+      data = self.retreive_sensor_data()
+      time.sleep(2.0)
+      self.lighting.turn_off()
+      time.sleep(2.0)
+
+      # Reset update interval states
       self.is_triggered = False
       self.last_camera_update = time.time()
       self.last_weather_update = time.time()
-      return self.retreive_sensor_data()
+
+      return data
 
     else:
       data = {}
@@ -171,6 +183,6 @@ class Freedge(object):
   def shutdown(self):
     # Turn off lighting
     self.lighting.turn_off()
-    time.sleep(0.5)  # Wating for all the LEDs to turn off.
+    time.sleep(1.0)  # Wating for all the LEDs to turn off.
     # Turn off GPIO
     self.door.cleanup()

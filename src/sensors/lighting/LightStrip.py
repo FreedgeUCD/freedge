@@ -26,14 +26,14 @@ class LightStrip():
     self.strip.begin()
 
   def turn_off(self):
-    print("Turning off")
-    self.colorWipe(Color(0,0,0), 10)
+    self.colorWipe(Color(0,0,0), 3)
 
   def flash(self):
     """Animate Flashing Effect"""
+    self.colorWipe(Color(127, 127, 127), 3)
 
   # Define functions which animate LEDs in various ways.
-  def colorWipe(self, color, wait_ms=50):
+  def colorWipe(self, color, wait_ms=10):
     """Wipe color across display a pixel at a time."""
     for i in range(self.strip.numPixels()):
       self.strip.setPixelColor(i, color)
