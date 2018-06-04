@@ -23,9 +23,9 @@
 """Abstract Sensor Class"""
 
 class Sensor(object):
-    def __init__(self, id, cloud_provider=None):
+    """ Factory Pattern for Sensor object
+    
+    Properly adding more features in the feature"""
+    def __init__(self, id):
         self.id = id
-        self.cloud_provider = cloud_provider
         
-    def upload(self):  
-        raise NotImplementedError

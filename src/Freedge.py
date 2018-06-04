@@ -21,7 +21,7 @@
 # SOFTWARE.
 # =============================================================================
 import time
-from sensors import MagneticSwitch, WeatherAM2315
+from sensors import MagneticSwitch, WeatherAM2315, LightStrip
 
 # #######################
 # Hardware Configuration
@@ -47,6 +47,7 @@ I2C_AM2315_ADDRESS = 0x5c
 class Freedge(object):
   """Freedge, a communinty fridge, has multiple sensors to enable users effortlessly 
   and immediately know what food is curently available through a web app.
+
   -----------------
   How Freedge works
   -----------------
@@ -83,25 +84,30 @@ class Freedge(object):
       weather_update_interval: - int - update interval for weather sensor
       verbose: display debug message
     """
+    # Main components of our Freedge: a door sensor, 
+    # environment sensor (temp/ humid), camera and LED strip.
+    self.door = MagneticSwitch(pin=GPIO_DOOR_PIN, id='%s_door'% device_id)
+    self.environment = WeatherAM2315(address=I2C_AM2315_ADDRESS, id='%s_environment'% device_id)
+    self.lighting = LightStrip()
+
+    # Determine when to obtain sensory data
     self.is_triggered = False
+
+    # For sending data updates to the cloud in interval.
     self.last_weather_update = time.time()
     self.last_camera_update = time.time()
     self.camera_update_interval = camera_update_interval
     self.weather_update_interval = weather_update_interval
+
+    # For print debugging message to std
     self.verbose = verbose
-
-    self.door = MagneticSwitch(
-        pin=GPIO_DOOR_PIN, 
-        id='%s_door'% device_id)
-    self.environment = WeatherAM2315(
-        address=I2C_AM2315_ADDRESS, 
-        id='%s_environment'% device_id)
-
 
   def run(self):
     """This function get called in a while-loop 
     to determine the current status of Freedge.
     """
+    self.lighting.theaterChase()
+
     if self.door.is_open() and not self.is_triggered: 
       if self.verbose:
         print("Door is opening.")
@@ -160,5 +166,11 @@ class Freedge(object):
       print('Temperature: {:.2f}*C'.format(temperature))
       print('Active period: {:.2f} second(s)'.format(active_period))
       print("===============================\n")
-
     return data
+
+  def shutdown(self):
+    # Turn off lighting
+    self.lighting.turn_off()
+    time.sleep(0.5)  # Wating for all the LEDs to turn off.
+    # Turn off GPIO
+    self.door.cleanup()

@@ -27,7 +27,8 @@ from datetime import datetime
 
 class CloudDB(object):
 
-  def __init__(self, host, port, database):
+  def __init__(self, host, port, database, verbose=True):
+    self.verbose = verbose
     self.database = database
     self.client = influxdb.InfluxDBClient(host=host, port=port,database=database)
 
@@ -52,11 +53,14 @@ class CloudDB(object):
     # Send data to cloud
     try:
       status = self.client.write_points(messages)
+      if self.verbose:
+        print('Uploading new updates to cloud..')
+        print('Status: %s' %status)
+        print('Message: {}'.format(messages))
+
     except influxdb.exceptions.InfluxDBClientError as error:
       print(error)
       print("Creating database")
       self.client.create_database(self.database)
     finally:
       return messages, status
-  def close(self):
-    self.client.close()
