@@ -1,4 +1,3 @@
-
 # MIT License
 #
 # Copyright (c) 2018 Freedge.org
@@ -75,7 +74,7 @@ class Freedge(object):
   In addition, we use a Raspberry Pi 3B to act as mailman that sends all the 
   sensor data to cloud.
   """
-  def __init__(device_id, camera_update_interval, weather_update_interval, verbose):
+  def __init__(self, device_id, camera_update_interval, weather_update_interval, verbose):
     """Initialize Freedge object:
 
     Args:
@@ -85,8 +84,8 @@ class Freedge(object):
       verbose: display debug message
     """
     self.is_triggered = False
-    self.last_weather_update = 0
-    self.last_camera_update = 0
+    self.last_weather_update = time.time()
+    self.last_camera_update = time.time()
     self.camera_update_interval = camera_update_interval
     self.weather_update_interval = weather_update_interval
     self.verbose = verbose
@@ -99,15 +98,18 @@ class Freedge(object):
         id='%s_environment'% device_id)
 
 
-  def run(self, verbose=True):
+  def run(self):
+    """This function get called in a while-loop 
+    to determine the current status of Freedge.
+    """
     if self.door.is_open() and not self.is_triggered: 
-      if verbose:
+      if self.verbose:
         print("Door is opening.")
       self.is_triggered = True
       return None
 
     elif self.is_triggered and self.door.is_recently_closed():
-      if verbose:
+      if self.verbose:
         print("Door is closed.\n")
       time.sleep(1)
       self.is_triggered = False
@@ -118,12 +120,16 @@ class Freedge(object):
     else:
       data = {}
       if time.time() - self.last_weather_update > self.weather_update_interval:
-        temperature, humidity, ok = self.environment.sense()
-        if verbose:
-          print('Temperature: {:.2f}*C'.format(temperature))
-          print('Humidty: {:.2f}*C'.format(humidity))
         self.last_weather_update = time.time()
-        data['evironment'] = {
+        temperature, humidity, ok = self.environment.sense()
+        if self.verbose:
+          print("===============================")
+          print("Retrieving sensor data.")
+          print("===============================")
+          print('Humidty: {:.2f}%'.format(humidity))
+          print('Temperature: {:.2f}*C'.format(temperature))
+          print("===============================\n")
+        data['environment'] = {
           'temperature': temperature,
           'humidity': humidity
         }
@@ -135,20 +141,24 @@ class Freedge(object):
     # Obtain time duration that user
     # opens and closes the door.
     active_period = self.door.get_active_period()
+
     data = {
-      'active_period': active_period,
+      'active_period': {'value': active_period},
       'environment': 
         {'temperature': temperature,
           'humidity': humidity},
-      'images': None,  # a list of images  data
+      'images': {  # a list of images  data
+        'camera0': float('-1'),
+        'camera2': float('-1'),
+        'camera3': float('-1')},  
     }
-    if verbose:
-      print("-----------------------")
+    if self.verbose:
+      print("===============================")
       print("Retrieving sensor data.")
-      print("------------------------\n")
-      print('Active period: {:.2f}'.format(active_period))
+      print("===============================")
+      print('Humidty: {:.2f}%'.format(humidity))
       print('Temperature: {:.2f}*C'.format(temperature))
-      print('Humidty: {:.2f}*C'.format(humidity))
-      print("-----------------------\n")
+      print('Active period: {:.2f} second(s)'.format(active_period))
+      print("===============================\n")
 
     return data

@@ -37,8 +37,6 @@ class WeatherAM2315(Sensor):
     while True:
       temp, humid, ok = self.am2315.sense()
       if ok == 1:
-        print("Temperature: {:.2f}*C".format(self.temperature))
-        print("Humidity: {:.2f}%".format(self.humidity))
         break
       else:
         num_attempts += 1

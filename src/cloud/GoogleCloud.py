@@ -15,7 +15,7 @@
 # limitations under the License.
 """Python sample for connecting to Google Cloud IoT Core via MQTT, using JWT.
 
-Notes: This one provides scable solution, however, it seems to be too 
+****Notes***: This one provides scable solution, however, it seems to be too 
 complicated for this project.
 """
 
@@ -30,10 +30,9 @@ import time
 import jwt
 import paho.mqtt.client as mqt
 # [END iot_mqtt_includes]
-from api import CloudAPI
 
 
-class GoogleIoT(CloudAPI):
+class GoogleIoT(object):
   """Google Cloud IoT Core API. This one provides scable solution, however,
   it seems to be too complicated for this project.
   
@@ -79,8 +78,6 @@ class GoogleIoT(CloudAPI):
     self.client = None
     self.token_issued_date = 0
     self.token_renew_period = token_renew_period
-
-    super(GoogleIoT, self).__init__()
 
   def is_jwt_expired(self):
     seconds_since_issue = (datetime.datetime.utcnow() - self.token_issued_date).seconds

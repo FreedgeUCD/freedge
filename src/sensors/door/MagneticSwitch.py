@@ -58,7 +58,7 @@ class MagneticSwitch(Sensor):
         else:
             return False
 
-    def get_active_period():
+    def get_active_period(self):
         return self.last_close - self.last_open
 
     def cleanup(self):

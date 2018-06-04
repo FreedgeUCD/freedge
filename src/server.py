@@ -43,13 +43,18 @@ import time
 import argparse
 
 from Freedge import Freedge
+from cloud.CloudDB import CloudDB
 # from clouds import CloudDB, CloudML
 
 def main(args):
   # ############################
   # Initialize cloud and Freedge
   # ############################
-  # cloud = cloudDB('http://172.30.67.178', 'temperature_db')
+  cloud = CloudDB(
+      host='172.30.67.178', 
+      port=8086, 
+      database='freedgeDB')
+
   freedge = Freedge(
       device_id=args.device_id,
       camera_update_interval=args.camera_update_interval,
@@ -59,24 +64,29 @@ def main(args):
   # ##########################
   # Main Loop
   # ##########################
+  print('Device is intialized. Starting running...')
   try: 
     while True:
       updates = freedge.run()
       if updates:
-        print('Uploading new updates to cloud: {}'.format(updates))
-        # cloud.upload(updates)
+        msg, ok = cloud.upload(updates, args.device_id, location='US')
+        print('Uploading new updates to cloud..')
+        print('Status: %s' %ok)
+        print('Message: {}'.format(msg))
+
       time.sleep(0.1)
       
   except KeyboardInterrupt as exit_signal:
     print('Ctrl + C is pressed')
+    cloud.close()
     #TODO: add cleanup
 
 
 def parse_args():
   args = argparse.ArgumentParser()
   args.add_argument('--device_id', type=str, default='freedgePrototype')
-  args.add_argument('--camera_update_interval', type=int, default=600)
-  args.add_argument('--weather_update_interval', type=int, default=120)
+  args.add_argument('--camera_update_interval', type=int, default=10)
+  args.add_argument('--weather_update_interval', type=int, default=5)
   return args.parse_args()
 
 if __name__ == '__main__':

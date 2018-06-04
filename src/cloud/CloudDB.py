@@ -20,33 +20,43 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
-import time
 import json
 import requests
-import datetime
+import influxdb
+from datetime import datetime
 
-class CloudAPI(object):
-  """Abstract Class for Cloud API integration.
-"""  """
-  It enables us to (potentially) use Google Cloud, MS Azure, or AWS service
-  in a unifed way.
-  """
-  def __init__(self):
-    self.connected = False
+class CloudDB(object):
 
-  def is_connected(self):
-    return self.connected
-
-  def publish(self, topic, data):
-    raise NotImplementedError
-
-class InfluxDB(CloudAPI):
-
-  def __init__(host, port, user, passwd, database):
-    self.host = host
-    self.port = port
-    self.user = user
-    self.passwd = passwd
+  def __init__(self, host, port, database):
     self.database = database
-  
-  
+    self.client = influxdb.InfluxDBClient(host=host, port=port,database=database)
+
+  def upload(self, data, device_id, location):
+    # Time format : "2018-06-05T23:00:00Z",
+    current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    messages = []
+    status = None
+
+    # Parse Data into Standard InfluxDB format
+    # Reference: https://influxdb-python.readthedocs.io/en/latest/api-documentation.html
+    for measurement in data.keys():
+      msg = {
+        "time": current_time,
+        "measurement": measurement,
+        "tags":{
+          "device": device_id,
+          "location": location},
+        "fields": data[measurement]}
+      messages.append(msg)
+
+    # Send data to cloud
+    try:
+      status = self.client.write_points(messages)
+    except influxdb.exceptions.InfluxDBClientError as error:
+      print(error)
+      print("Creating database")
+      self.client.create_database(self.database)
+    finally:
+      return messages, status
+  def close(self):
+    self.client.close()
