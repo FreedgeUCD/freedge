@@ -20,9 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
+"""This file contains a Freedge Protoype object, so there are a few assumptions:
+
+  Freedge Protoype has 1 door (magnetic switch) sensor, 1 environment (AM2315) 
+sensor, 3 USB cameras (for each level), and 1 LED WS2812B Strip (60 LEDS).
+
+"""
 import time
 from sensors import MagneticSwitch, WeatherAM2315, LightStrip, CameraMananger
-
 # #######################
 # Hardware Configuration
 # #######################
@@ -45,7 +50,6 @@ GPIO_DOOR_PIN = 14  # in BCM Mode
 I2C_AM2315_ADDRESS = 0x5c
 
 
-
 class Freedge(object):
   """Freedge, a communinty fridge, has multiple sensors to enable users effortlessly 
   and immediately know what food is curently available through a web app.
@@ -63,17 +67,6 @@ class Freedge(object):
   the update interval will be reset starting from last active period.
 
   * All collected data will send to a Cloud Database.
-
-  Hardware Info
-  -------------
-  In this protoype, Freedge would have the following sensors:
-    * A Door sensor (Magnetic Switch): to know when someone is using Freedge.
-    * A Weather sensor (AM2315): to know the current temperature/humidity.
-    * 3 Cameras (ELP 170* Wide angle USB cam): to know what is currently inside
-          Freedge.
-
-  In addition, we use a Raspberry Pi 3B to act as mailman that sends all the 
-  sensor data to cloud.
   """
   def __init__(self, device_id, camera_update_interval, weather_update_interval, verbose):
     """Initialize Freedge object:
@@ -138,7 +131,6 @@ class Freedge(object):
       self.is_triggered = False
       self.last_camera_update = time.time()
       self.last_weather_update = time.time()
-
       return data
 
     else:
@@ -162,7 +154,7 @@ class Freedge(object):
   def retreive_sensor_data(self):
     # Obtain temperature, humidty data
     temperature, humidity, ok = self.environment.sense()
-    
+
     # Obtain time duration that user
     # opens and closes the door.
     active_period = self.door.get_active_period()

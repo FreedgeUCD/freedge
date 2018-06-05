@@ -41,7 +41,6 @@ How Freedge works
 import sys
 import time
 import argparse
-
 from Freedge import Freedge
 from cloud.CloudDB import CloudDB
 
@@ -49,8 +48,15 @@ from cloud.CloudDB import CloudDB
 def parse_args():
   args = argparse.ArgumentParser()
   args.add_argument('--device_id', type=str, default='freedgePrototype')
+
   args.add_argument('--camera_update_interval', type=int, default=600)
   args.add_argument('--weather_update_interval', type=int, default=120)
+
+  args.add_argument('--cloudb_host', type=str, default='172.30.67.178')
+  args.add_argument('--cloudb_port', type=int, default=8086)
+  args.add_argument('--cloudb_database', type=str, default='freedgeDB')
+
+  args.add_argument('--verbose', type=bool, default=True)
   return args.parse_args()
 
 
@@ -59,17 +65,16 @@ def main(args):
   # Initialize cloud and Freedge
   # ############################
   cloud = CloudDB(
-      host='172.30.67.178', 
-      port=8086, 
-      database='freedgeDB', 
-      verbose=True)
+      host=args.cloudb_host, 
+      port=args.cloudb_port, 
+      database=args.cloudb_database, 
+      verbose=args.verbose)
 
   freedge = Freedge(
       device_id=args.device_id,
       camera_update_interval=args.camera_update_interval,
       weather_update_interval=args.weather_update_interval,
-      verbose=True)
-
+      verbose=args.verbose)
   # ##########################
   # Main Loop
   # ##########################
