@@ -40,7 +40,7 @@ class WeatherAM2315(Sensor):
         break
       else:
         num_attempts += 1
-        print("Sensor is temporarily unavailable. Reconnecting ({}/{})".format(
+        print("Weather sensor is temporarily unavailable. Attempting to connect ({}/{})".format(
               num_attempts,max_attempts))
         time.sleep(0.5)
         if num_attempts >= max_attempts:

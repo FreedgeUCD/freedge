@@ -21,7 +21,7 @@
 # SOFTWARE.
 # =============================================================================
 import time
-from sensors import MagneticSwitch, WeatherAM2315, LightStrip
+from sensors import MagneticSwitch, WeatherAM2315, LightStrip, CameraMananger
 
 # #######################
 # Hardware Configuration
@@ -37,18 +37,19 @@ from sensors import MagneticSwitch, WeatherAM2315, LightStrip
 
 # PIN to receive Door (RED) Signal.
 # Also, the ground (BLACK) wire is connected to PIN 4.
-GPIO_DOOR_PIN = 12  # in BCM Mode
+GPIO_DOOR_PIN = 14  # in BCM Mode
 
 # Weather sensor (AM2315) uses I2C protocol, we follow this tutorial to determine 
 # the  address mapping on Linux: 
 # [1] https://shop.switchdoc.com/products/am2315-encased-i2c-temperature-humidity-sensor-for-raspberry-pi-arduino
 I2C_AM2315_ADDRESS = 0x5c
 
+
+
 class Freedge(object):
   """Freedge, a communinty fridge, has multiple sensors to enable users effortlessly 
   and immediately know what food is curently available through a web app.
 
-  -----------------
   How Freedge works
   -----------------
   * For every `weather_update_interval` seconds, we collect the current 
@@ -63,7 +64,6 @@ class Freedge(object):
 
   * All collected data will send to a Cloud Database.
 
-  -------------
   Hardware Info
   -------------
   In this protoype, Freedge would have the following sensors:
@@ -84,10 +84,18 @@ class Freedge(object):
       weather_update_interval: - int - update interval for weather sensor
       verbose: display debug message
     """
-    # Main components of our Freedge: a door sensor, 
-    # environment sensor (temp/ humid), camera and LED strip.
+    
+    # Camera manager controls a list of camera devices (e.g [0, 1, 2]),
+    # handle to take photos whenever there is a trigger event (e.g. door opens) 
+    self.camera = CameraMananger(devices=[0, 1, 2], id='%s_cameramanager'%device_id)
+
+    # Magnetic switch sensor senses whenever someone open/close the door.
     self.door = MagneticSwitch(pin=GPIO_DOOR_PIN, id='%s_door'% device_id)
+
+    # WeatherAM2315 senses the current temperature / humidty in Freedge.
     self.environment = WeatherAM2315(address=I2C_AM2315_ADDRESS, id='%s_environment'% device_id)
+
+    # LightStrip controls the LEDs strip in Freedge.
     self.lighting = LightStrip()
 
     # Determine when to obtain sensory data
@@ -107,12 +115,10 @@ class Freedge(object):
     to determine the current status of Freedge.
     """
 
-    # self.lighting.theaterChase()
     if self.door.is_open() and not self.is_triggered: 
       if self.verbose:
         print("Door is opening.")
       self.is_triggered = True
-      # self.lighting.theaterChase()
       return None
 
     elif self.is_triggered and self.door.is_recently_closed():
@@ -156,9 +162,11 @@ class Freedge(object):
   def retreive_sensor_data(self):
     # Obtain temperature, humidty data
     temperature, humidity, ok = self.environment.sense()
+    
     # Obtain time duration that user
     # opens and closes the door.
     active_period = self.door.get_active_period()
+    images = self.camera.trigger()
 
     data = {
       'active_period': {'value': active_period},

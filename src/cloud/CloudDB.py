@@ -20,10 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
+"""
+Reference: 
+[1] https://influxdb-python.readthedocs.io/en/latest/api-documentation.html
+"""
 import json
 import requests
 import influxdb
 from datetime import datetime
+
 
 class CloudDB(object):
 
@@ -39,7 +44,6 @@ class CloudDB(object):
     status = None
 
     # Parse Data into Standard InfluxDB format
-    # Reference: https://influxdb-python.readthedocs.io/en/latest/api-documentation.html
     for measurement in data.keys():
       msg = {
         "time": current_time,
@@ -58,9 +62,10 @@ class CloudDB(object):
         print('Status: %s' %status)
         print('Message: {}'.format(messages))
 
-    except influxdb.exceptions.InfluxDBClientError as error:
-      print(error)
+    except influxdb.exceptions.InfluxDBClientError as database_error:
+      print(database_error)
       print("Creating database")
       self.client.create_database(self.database)
+
     finally:
       return messages, status

@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Python sample for connecting to Google Cloud IoT Core via MQTT, using JWT.
-
-****Notes***: This one provides scable solution, however, it seems to be too 
+***Deprecated***
+****Notes***:
+ This one provides scable solution, however, it seems to be too 
 complicated for this project.
 """
 

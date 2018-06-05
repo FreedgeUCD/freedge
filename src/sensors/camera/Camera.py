@@ -37,6 +37,8 @@ class Camera(Sensor):
             print('Cannot read camera %s' % self.device)
             cam.release()
             return None
+        # Hack: flip upside down
+        image = cv2.flip(image, 1)
         img_file = '/tmp/camera%s.jpg' % self.device
         cv2.imwrite(img_file, image)
         cam.release()

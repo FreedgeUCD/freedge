@@ -26,10 +26,10 @@ at the same time.
 from .Camera import Camera
 
 class CameraMananger(object):
-    def __init__(self, devices, id, cloud_provider=None):
+    def __init__(self, devices, id):
         self.id = id
         self.activated = False
-        self.manager = self._setup(devices, cloud_provider)
+        self.manager = self._setup(devices)
 
     def activate(self):
         self.activated = True
@@ -42,13 +42,12 @@ class CameraMananger(object):
         for cam in self.manager:
             cam.takes_photo()
 
-    def _setup(self, devices,cloud_provider):
+    def _setup(self, devices):
         manager = []
-        _, registry_id, device_id = self.id.split('_')
+        device_id, _ = self.id.split('_')
         for idx, device in enumerate(devices):
             camera = Camera(
                 device=device, 
-                id='cam{}_{}_{}'.format(idx, registry_id, device_id), 
-                cloud_provider=cloud_provider)
+                id='{}_camera_{}'.format(device_id, idx))
             manager.append(camera)
         return manager

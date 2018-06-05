@@ -25,9 +25,7 @@ import datetime
 import RPi.GPIO as GPIO
 from ..Sensor import Sensor
 
-     
-# Rasp Pi 3B GPIO Pinout:
-# Ref: http://pi4j.com/pins/model-3b-rev1.html
+# Magnetic Switch runs in BCM mode
 GPIO.setmode(GPIO.BCM)
 
 class MagneticSwitch(Sensor):
@@ -37,6 +35,7 @@ class MagneticSwitch(Sensor):
         self.last_open = time.time()
         self.last_close = time.time()
         super(MagneticSwitch, self).__init__(**kwargs)
+
         # Set up the door sensor pin.
         GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP) 
 

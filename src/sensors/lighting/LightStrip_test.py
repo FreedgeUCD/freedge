@@ -5,7 +5,6 @@ from LightStrip import LightStrip
 if __name__ == '__main__':
   # Create NeoPixel object with appropriate configuration.
   strip = LightStrip()
-
   try:
     while True:
       print ('Color wipe animations.')
