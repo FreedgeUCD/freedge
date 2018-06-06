@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # =============================================================================
-
+import os
 import cv2
 from ..Sensor import Sensor
 
@@ -29,17 +29,23 @@ class Camera(Sensor):
         self.device = device
         super(Camera,self).__init__(**kwargs)
 
-    def takes_photo(self):
+    def takes_photo(self, output_path):
         print("\nTaking photo from camera %s"% self.device)
-        cam = cv2.VideoCapture(self.device)
-        ret, image = cam.read()
+        cap = cv2.VideoCapture(self.device)
+
+        # Set settings manually
+        # Reference: Python 2.4.9
+        # https://docs.opencv.org/2.4.9/modules/highgui/doc/reading_and_writing_images_and_video.html?highlight=videocapture#videocapture-set
+        cap.set(3,640)  # CV_CAP_PROP_FRAME_WIDTH
+        cap.set(4,480)  # CV_CAP_PROP_FRAME_HEIGHT
+        ret, image = cap.read()
         if not ret:
             print('Cannot read camera %s' % self.device)
-            cam.release()
+            cap.release()
             return None
         # Hack: flip upside down
-        image = cv2.flip(image, 1)
-        img_file = '/tmp/camera%s.jpg' % self.device
+        image = cv2.flip(image, -1)
+        img_file = os.path.join(output_path, 'camera%s.jpg' % self.device)
         cv2.imwrite(img_file, image)
-        cam.release()
+        cap.release()
         return image

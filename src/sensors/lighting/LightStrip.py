@@ -31,6 +31,11 @@ class LightStrip():
   def flash(self):
     """Animate Flashing Effect"""
     self.colorWipe(Color(127, 127, 127), 3)
+    time.sleep(0.3)
+    self.colorWipe(Color(127, 127, 127), 3)
+    time.sleep(0.5)
+    self.colorWipe(Color(127, 127, 127), 3)
+
 
   # Define functions which animate LEDs in various ways.
   def colorWipe(self, color, wait_ms=10):

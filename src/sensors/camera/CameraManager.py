@@ -37,10 +37,14 @@ class CameraMananger(object):
     def is_activated(self):
         return self.activated
 
-    def trigger(self):
+    def trigger(self, output_path='/home/pi/'):
         self.activated = False
+        images = {}
         for cam in self.manager:
-            cam.takes_photo()
+            image = cam.takes_photo(output_path)
+            if image is not None:
+                images[cam.id] = image
+        return images
 
     def _setup(self, devices):
         manager = []

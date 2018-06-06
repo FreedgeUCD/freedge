@@ -28,6 +28,7 @@ sensor, 3 USB cameras (for each level), and 1 LED WS2812B Strip (60 LEDS).
 """
 import time
 from sensors import MagneticSwitch, WeatherAM2315, LightStrip, CameraMananger
+
 # #######################
 # Hardware Configuration
 # #######################
@@ -112,63 +113,56 @@ class Freedge(object):
       if self.verbose:
         print("Door is opening.")
       self.is_triggered = True
-      return None
-
+      return None, None
     elif self.is_triggered and self.door.is_recently_closed():
       if self.verbose:
         print("Door is closed.\n")
-
       # Obtaining Data
-      self.lighting.flash()
-      time.sleep(2.0)
-
-      data = self.retreive_sensor_data()
-      time.sleep(2.0)
-      self.lighting.turn_off()
-      time.sleep(2.0)
+      sensor_data = self.retreive_sensor_data()
+      images = self.retreive_images()
 
       # Reset update interval states
       self.is_triggered = False
       self.last_camera_update = time.time()
       self.last_weather_update = time.time()
-      return data
-
+      
+      return sensor_data, image
     else:
-      data = {}
+      sensor_data = {}
+      images = None
+      # Get Envinronment Sensor Data
       if time.time() - self.last_weather_update > self.weather_update_interval:
         self.last_weather_update = time.time()
         temperature, humidity, ok = self.environment.sense()
         if self.verbose:
           print("===============================")
-          print("Retrieving sensor data.")
+          print("Retrieving Weather sensor data.")
           print("===============================")
           print('Humidty: {:.2f}%'.format(humidity))
           print('Temperature: {:.2f}*C'.format(temperature))
           print("===============================\n")
-        data['environment'] = {
+        sensor_data['environment'] = {
           'temperature': temperature,
           'humidity': humidity
         }
-      return data
+      # Get Camera Sensor Data
+      if time.time() - self.last_camera_update > self.camera_update_interval:
+        images = self.retreive_images()
+        self.last_camera_update = time.time()
+
+      return sensor_data, images
 
   def retreive_sensor_data(self):
-    # Obtain temperature, humidty data
-    temperature, humidity, ok = self.environment.sense()
-
-    # Obtain time duration that user
-    # opens and closes the door.
+    # Obtain time period user used Freedge.
     active_period = self.door.get_active_period()
-    images = self.camera.trigger()
 
+  # Obtain temperature, humidty data
+    temperature, humidity, ok = self.environment.sense()
     data = {
       'active_period': {'value': active_period},
       'environment': 
         {'temperature': temperature,
           'humidity': humidity},
-      'images': {  # a list of images  data
-        'camera0': float('-1'),
-        'camera2': float('-1'),
-        'camera3': float('-1')},  
     }
     if self.verbose:
       print("===============================")
@@ -179,6 +173,20 @@ class Freedge(object):
       print('Active period: {:.2f} second(s)'.format(active_period))
       print("===============================\n")
     return data
+
+  def retreive_images(self):
+    # Turn on Flash light
+    self.lighting.flash()
+    time.sleep(4.0)
+
+    images = self.camera.trigger(output_path='/home/pi/outputs')
+
+    # Turn off Flash light
+    time.sleep(1.0)
+    self.lighting.turn_off()
+    time.sleep(2.0)
+
+    return images
 
   def shutdown(self):
     # Turn off lighting
