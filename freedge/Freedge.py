@@ -27,48 +27,11 @@ sensor, 3 USB cameras (for each level), and 1 LED WS2812B Strip (60 LEDS).
 
 """
 import time
+from freedge.config import *
 from sensors import MagneticSwitch, WeatherAM2315, LightStrip, CameraMananger
-
-# #######################
-# Hardware Configuration
-# #######################
-# Define how sensors are connected to Freedge. Raspberry Pi 3 has over
-# 40 GPIO PINs, 4 USB ports. The below config. shows how each component 
-# is connected (or wired) to the Rasp Pi 3.
-
-# Reference:
-# ---------
-# Rasp Pi 3B GPIO Pinout:
-# Ref: http://pi4j.com/pins/model-3b-rev1.html
-
-# PIN to receive Door (RED) Signal.
-# Also, the ground (BLACK) wire is connected to PIN 4.
-GPIO_DOOR_PIN = 14  # in BCM Mode
-
-# Weather sensor (AM2315) uses I2C protocol, we follow this tutorial to determine 
-# the  address mapping on Linux: 
-# [1] https://shop.switchdoc.com/products/am2315-encased-i2c-temperature-humidity-sensor-for-raspberry-pi-arduino
-I2C_AM2315_ADDRESS = 0x5c
 
 
 class Freedge(object):
-  """Freedge, a communinty fridge, has multiple sensors to enable users effortlessly 
-  and immediately know what food is curently available through a web app.
-
-  How Freedge works
-  -----------------
-  * For every `weather_update_interval` seconds, we collect the current 
-  temperature / humidty of freedge.
-
-  * For every `camera_update_interval` seconds,  we collect images inside the 
-  freedge (for quality control analysis later).
-
-  * Whenever someone open/close the door, we also collect data from all
-  sensors, including images, temp/hudmidty, and active period. In addition,
-  the update interval will be reset starting from last active period.
-
-  * All collected data will send to a Cloud Database.
-  """
   def __init__(self, device_id, camera_update_interval, weather_update_interval, verbose):
     """Initialize Freedge object:
 
